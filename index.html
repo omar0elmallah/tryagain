@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tamec</title>
+  <!-- إضافة Font Awesome للأيقونات -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- استخدام مكتبات Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+  <style>
+    /* إضافة خط عصري من Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap');
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1e1e2f, #2a4066, #6b48ff, #ff589e, #ffcc00);
+      background-size: 200% 200%;
+      animation: gradientBG 15s ease infinite;
+      direction: rtl;
+      overflow-x: hidden;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* تحسين تصميم صفحة تسجيل الدخول والاشتراك */
+    .auth-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .auth-box {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 15px 50px rgba(107, 72, 255, 0.4), 0 0 80px rgba(255, 88, 158, 0.3);
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .auth-box:hover {
+      transform: translateY(-10px);
+    }
+    .auth-box h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #6b48ff;
+      text-shadow: 0 0 10px rgba(107, 72, 255, 0.5);
+      margin-bottom: 20px;
+    }
+    .auth-box h2 {
+      font-size: 24px;
+      color: #1a1a1a;
+      margin-bottom: 25px;
+    }
+    .auth-box input {
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      border: none;
+      border-radius: 12px;
+      background: rgba(245, 245, 245, 0.9);
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .auth-box input:focus {
+      background: #fff;
+      box-shadow: 0 0 15px rgba(107, 72, 255, 0.5);
+      outline: none;
+    }
+    .auth-box button {
+      background: linear-gradient(45deg, #6b48ff, #ff589e);
+      color: #fff;
+      border: none;
+      padding: 15px;
+      width: 100%;
+      border-radius: 35px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 20px;
+      transition: all 0.4s ease;
+      box-shadow: 0 0 15px rgba(107, 72, 255, 0.6);
+    }
+    .auth-box button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 88, 158, 0.8);
+    }
+    .auth-box p {
+      margin-top: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+    .auth-box a {
+      color: #6b48ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .auth-box a:hover {
+      color: #ff589e;
+      text-decoration: underline;
+    }
+    /* تصميم المنصة الرئيسية */
+    header {
+      background: linear-gradient(45deg, #6b48ff, #ff589e, #ffcc00, #00ddeb);
+      color: #fff;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      box-shadow: 0 8px 25px rgba(107, 72, 255, 0.5);
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px rgba(255, 88, 158, 0.8);
+    }
+    .user {
+      font-size: 18px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 20px;
+      border-radius: 30px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    .logout-btn {
+      background: linear-gradient(45deg, #ff589e, #ffcc00);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.4s ease;
+    }
+    .logout-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 88, 158, 0.8);
+    }
+    .post-form {
+      margin-top: 100px;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(107, 72, 255, 0.3);
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      transition: transform 0.4s ease;
+    }
+    .post-form:hover {
+      transform: translateY(-10px);
+    }
+    .post-form textarea {
+      width: 100%;
+      height: 140px;
+      padding: 20px;
+      border: none;
+      border-radius: 15px;
+      resize: none;
+      font-size: 18px;
+      background: rgba(245, 245, 245, 0.9);
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .post-form textarea:focus {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(107, 72, 255, 0.3);
+      outline: none;
+    }
+    .post-form button {
+      background: linear-gradient(45deg, #6b48ff, #ff589e);
+      color: #fff;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 35px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.4s ease;
+    }
+    .post-form button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(255, 88, 158, 0.8);
+    }
+    .posts {
+      max-width: 800px;
+      margin: 50px auto;
+    }
+    .post {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(107, 72, 255, 0.3);
+      margin-bottom: 30px;
+      transition: all 0.4s ease;
+    }
+    .post:hover {
+      transform: translateY(-10px);
+    }
+    .post p {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.7;
+      color: #1a1a1a;
+    }
+    .post .time {
+      color: #bbb;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    .post-actions {
+      margin-top: 25px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+    .post-actions button {
+      background: none;
+      border: none;
+      color: #6b48ff;
+      cursor: pointer;
+      font-size: 24px;
+      padding: 8px;
+      transition: all 0.3s ease;
+    }
+    .post-actions button:hover {
+      color: #ff589e;
+      transform: scale(1.3);
+    }
+    .likes-count {
+      color: #888;
+      font-size: 16px;
+      padding: 5px 0;
+    }
+    .comment-section {
+      margin-top: 25px;
+    }
+    .comment-input {
+      width: 100%;
+      padding: 15px 25px;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      background: rgba(245, 245, 245, 0.9);
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .comment-input:focus {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(107, 72, 255, 0.3);
+      outline: none;
+    }
+    .comments-list {
+      margin-top: 20px;
+    }
+    .comment {
+      font-size: 16px;
+      color: #1a1a1a;
+      margin: 12px 0;
+      padding: 12px 20px;
+      background: rgba(245, 245, 245, 0.9);
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .comment:hover {
+      transform: translateX(5px);
+    }
+    .notification {
+      position: fixed;
+      bottom: 40px;
+      left: 40px;
+      background: linear-gradient(45deg, #6b48ff, #ff589e);
+      color: #fff;
+      padding: 20px 40px;
+      border-radius: 40px;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 8px 30px rgba(107, 72, 255, 0.6);
+      font-size: 18px;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- صفحة تسجيل الدخول والاشتراك -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-box">
+      <h1>مرحبًا بك في Tamec</h1>
+      <div id="loginBox">
+        <h2>تسجيل الدخول</h2>
+        <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required>
+        <input type="password" id="loginPassword" placeholder="كلمة المرور" required>
+        <button onclick="login()">تسجيل الدخول</button>
+        <p>ليس لديك حساب؟ <a href="#" onclick="showSignup()">أنشئ حسابًا</a></p>
+      </div>
+      <div id="signupBox" style="display: none;">
+        <h2>إنشاء حساب</h2>
+        <input type="text" id="signupName" placeholder="الاسم" required>
+        <input type="date" id="signupBirthdate" required>
+        <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" required>
+        <input type="password" id="signupPassword" placeholder="كلمة المرور" required>
+        <button onclick="signup()">إنشاء الحساب</button>
+        <p>لديك حساب؟ <a href="#" onclick="showLogin()">تسجيل الدخول</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- المنصة الرئيسية -->
+  <header id="mainHeader" style="display: none;">
+    <h1>Tamec</h1>
+    <div class="user" id="userName">مرحبًا، [اسمك]</div>
+    <button onclick="logout()" class="logout-btn">تسجيل الخروج</button>
+  </header>
+
+  <div class="post-form" id="postForm" style="display: none;">
+    <textarea id="postInput" placeholder="ما الذي تفكر فيه؟"></textarea>
+    <button onclick="addPost()">نشر</button>
+  </div>
+
+  <div id="postsContainer" class="posts" style="display: none;"></div>
+
+  <script>
+    // تهيئة Firebase باستخدام الإعدادات التي قدمتها
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfXJ-2tmCYo-pQjfN_4nAdxC-NcqfjAlo",
+      authDomain: "tamec-8f9ea.firebaseapp.com",
+      projectId: "tamec-8f9ea",
+      storageBucket: "tamec-8f9ea.firebasestorage.app",
+      messagingSenderId: "372610375354",
+      appId: "1:372610375354:web:1beaff9695e7b49cdeec83",
+      measurementId: "G-W7TT6VTKSP"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // دالة تسجيل الدخول
+    function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          showMainContent(user.displayName || user.email.split('@')[0]);
+          showNotification('تم تسجيل الدخول بنجاح');
+        })
+        .catch((error) => {
+          showNotification('خطأ: ' + error.message);
+        });
+    }
+
+    // دالة إنشاء حساب
+    function signup() {
+      const name = document.getElementById('signupName').value.trim();
+      const birthdate = document.getElementById('signupBirthdate').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+
+      if (!name || !birthdate || !email || !password) {
+        showNotification('يرجى ملء جميع الحقول!');
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          return user.updateProfile({
+            displayName: name
+          }).then(() => {
+            showMainContent(name);
+            showNotification('تم إنشاء الحساب بنجاح');
+          });
+        })
+        .catch((error) => {
+          showNotification('خطأ: ' + error.message);
+        });
+    }
+
+    // دالة تسجيل الخروج
+    function logout() {
+      auth.signOut()
+        .then(() => {
+          document.getElementById('authContainer').style.display = 'flex';
+          document.getElementById('mainHeader').style.display = 'none';
+          document.getElementById('postForm').style.display = 'none';
+          document.getElementById('postsContainer').style.display = 'none';
+          showNotification('تم تسجيل الخروج');
+        })
+        .catch((error) => {
+          showNotification('خطأ: ' + error.message);
+        });
+    }
+
+    // عرض/إخفاء نموذج التسجيل أو تسجيل الدخول
+    function showSignup() {
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('signupBox').style.display = 'block';
+    }
+    function showLogin() {
+      document.getElementById('signupBox').style.display = 'none';
+      document.getElementById('loginBox').style.display = 'block';
+    }
+
+    // عرض المحتوى الرئيسي
+    function showMainContent(displayName) {
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('mainHeader').style.display = 'flex';
+      document.getElementById('postForm').style.display = 'block';
+      document.getElementById('postsContainer').style.display = 'block';
+      document.getElementById('userName').textContent = `مرحبًا، ${displayName}`;
+      loadPosts();
+    }
+
+    // التحقق من حالة المستخدم
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        showMainContent(user.displayName || user.email.split('@')[0]);
+      } else {
+        document.getElementById('authContainer').style.display = 'flex';
+        document.getElementById('mainHeader').style.display = 'none';
+        document.getElementById('postForm').style.display = 'none';
+        document.getElementById('postsContainer').style.display = 'none';
+      }
+    });
+
+    // تحميل المنشورات
+    document.addEventListener('DOMContentLoaded', () => {
+      if (auth.currentUser) loadPosts();
+    });
+
+    function loadPosts() {
+      const posts = JSON.parse(localStorage.getItem('posts')) || [];
+      const postsContainer = document.getElementById('postsContainer');
+      postsContainer.innerHTML = '';
+      posts.forEach(post => {
+        const postDiv = createPostElement(post);
+        postsContainer.appendChild(postDiv);
+      });
+    }
+
+    function createPostElement(post) {
+      const postDiv = document.createElement('div');
+      postDiv.classList.add('post');
+
+      const postContent = document.createElement('p');
+      postContent.textContent = post.text;
+
+      const postTime = document.createElement('div');
+      postTime.classList.add('time');
+      postTime.textContent = post.time;
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.classList.add('post-actions');
+
+      const likeButton = document.createElement('button');
+      likeButton.innerHTML = post.likes > 0 ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+      const likesCount = document.createElement('span');
+      likesCount.classList.add('likes-count');
+      likesCount.textContent = ` (${post.likes || 0})`;
+      likeButton.onclick = () => {
+        post.likes = (post.likes || 0) + 1;
+        likesCount.textContent = ` (${post.likes})`;
+        likeButton.innerHTML = '<i class="fas fa-heart"></i>';
+        updateLocalStorage();
+        showNotification('تم الإعجاب بالمنشور');
+      };
+
+      const commentButton = document.createElement('button');
+      commentButton.innerHTML = '<i class="far fa-comment"></i>';
+
+      const shareButton = document.createElement('button');
+      shareButton.innerHTML = '<i class="far fa-paper-plane"></i>';
+      shareButton.onclick = () => {
+        const sharedPost = {
+          text: `تمت المشاركة: ${post.text}`,
+          time: new Date().toLocaleString('ar-EG'),
+          likes: 0,
+          comments: []
+        };
+        const postsContainer = document.getElementById('postsContainer');
+        const newPostDiv = createPostElement(sharedPost);
+        postsContainer.insertBefore(newPostDiv, postsContainer.firstChild);
+        const posts = JSON.parse(localStorage.getItem('posts')) || [];
+        posts.unshift(sharedPost);
+        localStorage.setItem('posts', JSON.stringify(posts));
+        showNotification('تمت مشاركة المنشور');
+      };
+
+      const editButton = document.createElement('button');
+      editButton.innerHTML = '<i class="fas fa-edit"></i>';
+      editButton.onclick = () => {
+        const newText = prompt('عدّل المنشور:', post.text);
+        if (newText && newText.trim()) {
+          post.text = newText.trim();
+          postContent.textContent = post.text;
+          updateLocalStorage();
+          showNotification('تم تعديل المنشور');
+        }
+      };
+
+      const deleteButton = document.createElement('button');
+      deleteButton.innerHTML = '<i class="far fa-trash-alt"></i>';
+      deleteButton.onclick = () => {
+        if (confirm('هل تريد حذف هذا المنشور؟')) {
+          postDiv.remove();
+          updateLocalStorage();
+          showNotification('تم حذف المنشور');
+        }
+      };
+
+      actionsDiv.appendChild(likeButton);
+      actionsDiv.appendChild(likesCount);
+      actionsDiv.appendChild(commentButton);
+      actionsDiv.appendChild(shareButton);
+      actionsDiv.appendChild(editButton);
+      actionsDiv.appendChild(deleteButton);
+
+      const commentSection = document.createElement('div');
+      commentSection.classList.add('comment-section');
+
+      const commentInput = document.createElement('input');
+      commentInput.classList.add('comment-input');
+      commentInput.placeholder = 'اكتب تعليقًا...';
+
+      const commentsList = document.createElement('div');
+      commentsList.classList.add('comments-list');
+      if (post.comments) {
+        post.comments.forEach(comment => {
+          const commentP = document.createElement('p');
+          commentP.classList.add('comment');
+          commentP.textContent = comment;
+          commentsList.appendChild(commentP);
+        });
+      }
+
+      commentInput.onkeypress = (e) => {
+        if (e.key === 'Enter' && commentInput.value.trim()) {
+          const commentText = commentInput.value.trim();
+          const commentP = document.createElement('p');
+          commentP.classList.add('comment');
+          commentP.textContent = commentText;
+          commentsList.appendChild(commentP);
+          post.comments = post.comments || [];
+          post.comments.push(commentText);
+          commentInput.value = '';
+          updateLocalStorage();
+          showNotification('تم إضافة تعليق');
+        }
+      };
+
+      commentSection.appendChild(commentInput);
+      commentSection.appendChild(commentsList);
+
+      postDiv.appendChild(postContent);
+      postDiv.appendChild(postTime);
+      postDiv.appendChild(actionsDiv);
+      postDiv.appendChild(commentSection);
+
+      return postDiv;
+    }
+
+    function addPost() {
+      const postInput = document.getElementById('postInput');
+      const postText = postInput.value.trim();
+
+      if (postText === '') {
+        showNotification('يرجى كتابة شيء للنشر!');
+        return;
+      }
+
+      const post = {
+        text: postText,
+        time: new Date().toLocaleString('ar-EG'),
+        likes: 0,
+        comments: []
+      };
+
+      const postsContainer = document.getElementById('postsContainer');
+      const postDiv = createPostElement(post);
+      postsContainer.insertBefore(postDiv, postsContainer.firstChild);
+
+      const posts = JSON.parse(localStorage.getItem('posts')) || [];
+      posts.unshift(post);
+      localStorage.setItem('posts', JSON.stringify(posts));
+
+      postInput.value = '';
+      showNotification('تم نشر المنشور');
+    }
+
+    function updateLocalStorage() {
+      const posts = [];
+      document.querySelectorAll('.post').forEach(postDiv => {
+        const text = postDiv.querySelector('p').textContent;
+        const time = postDiv.querySelector('.time').textContent;
+        const likes = parseInt(postDiv.querySelector('.likes-count').textContent.match(/\d+/)?.[0] || 0);
+        const comments = Array.from(postDiv.querySelectorAll('.comment')).map(c => c.textContent);
+        posts.push({ text, time, likes, comments });
+      });
+      localStorage.setItem('posts', JSON.stringify(posts));
+    }
+
+    function showNotification(message) {
+      let notification = document.querySelector('.notification');
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.classList.add('notification');
+        document.body.appendChild(notification);
+      }
+      notification.textContent = message;
+      notification.style.display = 'block';
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+    }
+
+    document.getElementById('postInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        addPost();
+      }
+    });
+  </script>
+</body>
+</html>
